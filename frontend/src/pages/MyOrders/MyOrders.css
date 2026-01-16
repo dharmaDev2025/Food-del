@@ -1,0 +1,91 @@
+.my-orders {
+  padding: 30px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.my-orders h2 {
+  margin-bottom: 20px;
+  font-size: 26px;
+  text-align: center;
+}
+
+/* Container for all orders */
+.container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+/* Single order box */
+.my-orders-order {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.my-orders-order:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+}
+
+/* Parcel icon */
+.my-orders-order img {
+  width: 45px;
+  align-self: flex-start;
+}
+
+/* Text inside order */
+.my-orders-order p {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.4;
+}
+
+/* Status text */
+.my-orders-order p:last-of-type {
+  font-weight: 600;
+}
+
+/* Track Order button */
+.track-btn {
+  margin-top: 12px;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background-color: tomato;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.track-btn:hover {
+  background-color: #e64530;
+  transform: scale(1.03);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .my-orders {
+    padding: 15px;
+  }
+
+  .my-orders h2 {
+    font-size: 22px;
+  }
+
+  .my-orders-order {
+    padding: 15px;
+  }
+
+  .track-btn {
+    font-size: 13px;
+    padding: 9px;
+  }
+}
