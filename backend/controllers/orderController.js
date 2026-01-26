@@ -31,7 +31,7 @@ const placeOrder = async (req, res) => {
       price_data: {
         currency: "usd",
         product_data: { name: item.name },
-        unit_amount: Math.round((item.price / 80) * 100), // Convert INR to USD
+        unit_amount: Math.round((item.price / 80) * 100), // INR → USD
       },
       quantity: item.quantity,
     }));
@@ -44,14 +44,15 @@ const placeOrder = async (req, res) => {
         unit_amount: Math.round((2 / 80) * 100),
       },
       quantity: 1,
-    });
+    }));
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
       client_reference_id: newOrder._id.toString(),
-      payment_method_types: ["card"], // Only card payments
+      payment_method_types: ["card"],
+      // ✅ Correct success URL
       success_url: `${frontend_url}/verify?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${frontend_url}/verify?session_id={CHECKOUT_SESSION_ID}`,
     });
@@ -65,7 +66,6 @@ const placeOrder = async (req, res) => {
 
 // Verify payment
 const verifyOrder = async (req, res) => {
-  // Accept session_id from query or body
   const { session_id } = req.body || req.query;
   if (!session_id)
     return res.status(400).json({ success: false, message: "Missing session_id" });
@@ -74,12 +74,11 @@ const verifyOrder = async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
     if (session.payment_status === "paid") {
-      // Update order payment to true
       await orderModel.findByIdAndUpdate(session.client_reference_id, { payment: true });
       return res.json({ success: true, message: "Payment succeeded" });
     } else {
-      // Delete order if payment failed
-      await orderModel.findByIdAndDelete(session.client_reference_id);
+      // Keep the order but mark payment false instead of deleting
+      await orderModel.findByIdAndUpdate(session.client_reference_id, { payment: false });
       return res.json({ success: false, message: "Payment failed" });
     }
   } catch (error) {
@@ -91,8 +90,8 @@ const verifyOrder = async (req, res) => {
 // Fetch user's orders
 const userOrders = async (req, res) => {
   try {
-    const userId = req.user.id; // get from auth middleware
-    const orders = await orderModel.find({ userId }).sort({ date: -1 }); // latest orders first
+    const userId = req.user.id;
+    const orders = await orderModel.find({ userId }).sort({ date: -1 });
     res.json({ success: true, data: orders });
   } catch (error) {
     console.log("USER ORDERS ERROR:", error);
