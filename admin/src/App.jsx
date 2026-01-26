@@ -9,7 +9,7 @@ import Orders from './pages/Orders/Orders'
   import 'react-toastify/dist/ReactToastify.css';
 
 const App = () => {
-  const  url="http://localhost:4000"
+  const  url="https://food-del-backend-q5da.onrender.com"
 
   return (
     <div>
