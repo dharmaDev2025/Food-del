@@ -51,6 +51,7 @@ const placeOrder = async (req, res) => {
       mode: "payment",
       line_items,
       client_reference_id: newOrder._id.toString(),
+      payment_method_types: ["card"], // Only card payments
       success_url: `${frontend_url}/verify?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${frontend_url}/verify?session_id={CHECKOUT_SESSION_ID}`,
     });
@@ -64,7 +65,8 @@ const placeOrder = async (req, res) => {
 
 // Verify payment
 const verifyOrder = async (req, res) => {
-  const { session_id } = req.body;
+  // Accept session_id from query or body
+  const { session_id } = req.body || req.query;
   if (!session_id)
     return res.status(400).json({ success: false, message: "Missing session_id" });
 
@@ -98,33 +100,26 @@ const userOrders = async (req, res) => {
   }
 };
 
-//Listing orders for admin pannel
-const listOrders=async(req,res)=>{
-  try{
-    const orders=await orderModel.find({});
-    res.json({success:true,data:orders});
-
-
-
-  }
-  catch(error){
+// Listing orders for admin panel
+const listOrders = async (req, res) => {
+  try {
+    const orders = await orderModel.find({});
+    res.json({ success: true, data: orders });
+  } catch (error) {
     console.log(error);
-    res.json({success:false,message:"Error"})
-
+    res.json({ success: false, message: "Error" });
   }
-}
+};
 
-const updateStatus=async(req,res)=>{
-  try{
-    await orderModel.findByIdAndUpdate(req.body.orderId,{status:req.body.status})
-    res.json({success:true,})
-
-  }catch(error){
+// Update order status
+const updateStatus = async (req, res) => {
+  try {
+    await orderModel.findByIdAndUpdate(req.body.orderId, { status: req.body.status });
+    res.json({ success: true });
+  } catch (error) {
     console.log(error);
-    res.json({success:false,message:"Error"});
-    
+    res.json({ success: false, message: "Error" });
   }
+};
 
-}
-
-export { placeOrder, verifyOrder, userOrders,listOrders ,updateStatus};
+export { placeOrder, verifyOrder, userOrders, listOrders, updateStatus };
