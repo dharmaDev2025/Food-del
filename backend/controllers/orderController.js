@@ -6,7 +6,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // Place Order
 const placeOrder = async (req, res) => {
-  const frontend_url = "https://food-del-frontend-4tu7.onrender.com/";
+  const frontend_url = "https://food-del-frontend-4tu7.onrender.com";
 
   try {
     if (!req.user || !req.user.id) {
@@ -31,7 +31,7 @@ const placeOrder = async (req, res) => {
       price_data: {
         currency: "usd",
         product_data: { name: item.name },
-        unit_amount: Math.round((item.price / 80) * 100), // INR → USD
+        unit_amount: Math.round((item.price / 80) * 100), // Convert INR to USD
       },
       quantity: item.quantity,
     }));
@@ -44,15 +44,13 @@ const placeOrder = async (req, res) => {
         unit_amount: Math.round((2 / 80) * 100),
       },
       quantity: 1,
-    }));
+    });
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items,
       client_reference_id: newOrder._id.toString(),
-      payment_method_types: ["card"],
-      // ✅ Correct success URL
       success_url: `${frontend_url}/verify?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${frontend_url}/verify?session_id={CHECKOUT_SESSION_ID}`,
     });
@@ -66,7 +64,7 @@ const placeOrder = async (req, res) => {
 
 // Verify payment
 const verifyOrder = async (req, res) => {
-  const { session_id } = req.body || req.query;
+  const { session_id } = req.body;
   if (!session_id)
     return res.status(400).json({ success: false, message: "Missing session_id" });
 
@@ -74,11 +72,12 @@ const verifyOrder = async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
     if (session.payment_status === "paid") {
+      // Update order payment to true
       await orderModel.findByIdAndUpdate(session.client_reference_id, { payment: true });
       return res.json({ success: true, message: "Payment succeeded" });
     } else {
-      // Keep the order but mark payment false instead of deleting
-      await orderModel.findByIdAndUpdate(session.client_reference_id, { payment: false });
+      // Delete order if payment failed
+      await orderModel.findByIdAndDelete(session.client_reference_id);
       return res.json({ success: false, message: "Payment failed" });
     }
   } catch (error) {
@@ -90,8 +89,8 @@ const verifyOrder = async (req, res) => {
 // Fetch user's orders
 const userOrders = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const orders = await orderModel.find({ userId }).sort({ date: -1 });
+    const userId = req.user.id; // get from auth middleware
+    const orders = await orderModel.find({ userId }).sort({ date: -1 }); // latest orders first
     res.json({ success: true, data: orders });
   } catch (error) {
     console.log("USER ORDERS ERROR:", error);
@@ -99,26 +98,33 @@ const userOrders = async (req, res) => {
   }
 };
 
-// Listing orders for admin panel
-const listOrders = async (req, res) => {
-  try {
-    const orders = await orderModel.find({});
-    res.json({ success: true, data: orders });
-  } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
-  }
-};
+//Listing orders for admin pannel
+const listOrders=async(req,res)=>{
+  try{
+    const orders=await orderModel.find({});
+    res.json({success:true,data:orders});
 
-// Update order status
-const updateStatus = async (req, res) => {
-  try {
-    await orderModel.findByIdAndUpdate(req.body.orderId, { status: req.body.status });
-    res.json({ success: true });
-  } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
-  }
-};
 
-export { placeOrder, verifyOrder, userOrders, listOrders, updateStatus };
+
+  }
+  catch(error){
+    console.log(error);
+    res.json({success:false,message:"Error"})
+
+  }
+}
+
+const updateStatus=async(req,res)=>{
+  try{
+    await orderModel.findByIdAndUpdate(req.body.orderId,{status:req.body.status})
+    res.json({success:true,})
+
+  }catch(error){
+    console.log(error);
+    res.json({success:false,message:"Error"});
+    
+  }
+
+}
+
+export { placeOrder, verifyOrder, userOrders,listOrders ,updateStatus};
